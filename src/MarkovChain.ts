@@ -97,7 +97,7 @@ export function train(filename: string, depth: number): MarkovChain {
 
     const mc = { trie, depth };
 
-    fs.writeFileSync("/tmp/markov.json", JSON.stringify(mc));
+    fs.writeFileSync("/tmp/markov.json", JSON.stringify(runLengthEncodeMarkovChain(mc)));
 
     return mc;
 }
@@ -136,4 +136,43 @@ export function test(mc: MarkovChain): void {
         mc,
         "\ud83d\udebe \ud83c\udd92 \ud83c\udd93 \ud83c\udd95 \ud83c\udd96 \ud83c\udd97 \ud83c\udd99 \ud83c\udfe7"
     );
+}
+
+function runLengthEncodeArray<T>(arr: T[]): [number, T][] {
+    const result: [number, T][] = [];
+    if (arr.length === 0) return result;
+    let runItem: T = arr[0];
+    let runStart = 0;
+    let i = 1;
+
+    while (i < arr.length) {
+        const item = arr[i];
+        if (item !== runItem) {
+            result.push([i - runStart, runItem]);
+            runItem = item;
+            runStart = i;
+        }
+        i++;
+    }
+    result.push([i - runStart, runItem]);
+
+    return result;
+}
+
+function runLengthEncodeTrie(t: Trie): any {
+    return {
+        count: t.count,
+        arr: runLengthEncodeArray(
+            t.arr.map(x => {
+                if (typeof x === "object") {
+                    return runLengthEncodeTrie(x);
+                }
+                return x;
+            })
+        )
+    };
+}
+
+function runLengthEncodeMarkovChain(mc: MarkovChain): any {
+    return { depth: mc.depth, trie: runLengthEncodeTrie(mc.trie) };
 }
