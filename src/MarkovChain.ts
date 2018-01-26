@@ -3,7 +3,6 @@
 import * as fs from "fs";
 
 import { panic } from "./Support";
-import { TypeAttributeStoreView } from "./TypeGraph";
 
 export type SubTrie = number | undefined | Trie;
 export type Trie = {
@@ -96,7 +95,11 @@ export function train(filename: string, depth: number): MarkovChain {
         }
     }
 
-    return { trie, depth };
+    const mc = { trie, depth };
+
+    fs.writeFileSync("/tmp/markov.json", JSON.stringify(mc));
+
+    return mc;
 }
 
 export function evaluate(mc: MarkovChain, word: string): number {
