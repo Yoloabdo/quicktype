@@ -27,6 +27,7 @@ import { Readable } from "stream";
 import { panic, assert, defined, withDefault } from "./Support";
 import { introspectServer } from "./GraphQLIntrospection";
 import { getStream } from "./get-stream/index";
+import { train, test } from "./MarkovChain";
 
 const commandLineArgs = require("command-line-args");
 const getUsage = require("command-line-usage");
@@ -49,6 +50,7 @@ export interface CLIOptions {
     graphqlServerHeader?: string[];
     template?: string;
     out?: string;
+    markovInputFilename?: string;
 
     noMaps: boolean;
     noEnums: boolean;
@@ -237,6 +239,7 @@ function inferOptions(opts: Partial<CLIOptions>): CLIOptions {
         quiet: opts.quiet || false,
         version: opts.version || false,
         out: opts.out,
+        markovInputFilename: opts.markovInputFilename,
         graphqlSchema: opts.graphqlSchema,
         graphqlIntrospect: opts.graphqlIntrospect,
         graphqlServerHeader: opts.graphqlServerHeader,
@@ -337,6 +340,11 @@ const optionDefinitions: OptionDefinition[] = [
         name: "alphabetize-properties",
         type: Boolean,
         description: "Alphabetize order of class properties."
+    },
+    {
+        name: "markov-input-filename",
+        type: String,
+        description: "Markov corpus filename."
     },
     {
         name: "quiet",
@@ -518,6 +526,11 @@ export async function main(args: string[] | Partial<CLIOptions>) {
         if (options.version) {
             console.log(`quicktype version ${packageJSON.version}`);
             console.log("Visit quicktype.io for more info.");
+            return;
+        }
+        if (options.markovInputFilename !== undefined) {
+            const mc = train(options.markovInputFilename, 3);
+            test(mc);
             return;
         }
 
